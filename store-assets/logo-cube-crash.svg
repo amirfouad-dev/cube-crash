@@ -1,0 +1,46 @@
+<svg width="100%" viewBox="0 0 680 320" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>Cube Crash logo</title>
+<desc>Neon cyberpunk logo: glowing cyan and magenta cubes beside the wordmark CUBE CRASH on a dark plate.</desc>
+<rect x="0" y="0" width="680" height="320" rx="24" fill="#0a0a12"/>
+<rect x="1.5" y="1.5" width="677" height="317" rx="23" fill="none" stroke="#00f0ff" stroke-opacity="0.25" stroke-width="2"/>
+<path d="M28 12 h34 M12 28 v34" stroke="#00f0ff" stroke-opacity="0.6" stroke-width="4" stroke-linecap="round" fill="none"/>
+<path d="M652 12 h-34 M668 28 v34" stroke="#00f0ff" stroke-opacity="0.6" stroke-width="4" stroke-linecap="round" fill="none"/>
+<path d="M28 308 h34 M12 292 v-34" stroke="#00f0ff" stroke-opacity="0.6" stroke-width="4" stroke-linecap="round" fill="none"/>
+<path d="M652 308 h-34 M668 292 v-34" stroke="#00f0ff" stroke-opacity="0.6" stroke-width="4" stroke-linecap="round" fill="none"/>
+
+<g>
+  <rect x="52" y="122" width="86" height="86" rx="18" fill="#00f0ff" opacity="0.18"/>
+  <rect x="52" y="197" width="86" height="86" rx="18" fill="#00f0ff" opacity="0.18"/>
+  <rect x="127" y="197" width="86" height="86" rx="18" fill="#00f0ff" opacity="0.18"/>
+  <rect x="127" y="122" width="86" height="86" rx="18" fill="#ff2bd6" opacity="0.20"/>
+  <rect x="202" y="47" width="86" height="86" rx="18" fill="#ffb800" opacity="0.20"/>
+
+  <rect x="60" y="130" width="70" height="70" rx="12" fill="#00f0ff"/>
+  <rect x="60" y="130" width="70" height="32" rx="12" fill="#8ffaff"/>
+  <rect x="60" y="130" width="70" height="70" rx="12" fill="none" stroke="#c9feff" stroke-width="3"/>
+
+  <rect x="60" y="205" width="70" height="70" rx="12" fill="#00f0ff"/>
+  <rect x="60" y="205" width="70" height="32" rx="12" fill="#8ffaff"/>
+  <rect x="60" y="205" width="70" height="70" rx="12" fill="none" stroke="#c9feff" stroke-width="3"/>
+
+  <rect x="135" y="205" width="70" height="70" rx="12" fill="#00f0ff"/>
+  <rect x="135" y="205" width="70" height="32" rx="12" fill="#8ffaff"/>
+  <rect x="135" y="205" width="70" height="70" rx="12" fill="none" stroke="#c9feff" stroke-width="3"/>
+
+  <rect x="135" y="130" width="70" height="70" rx="12" fill="#ff2bd6"/>
+  <rect x="135" y="130" width="70" height="32" rx="12" fill="#ff9aec"/>
+  <rect x="135" y="130" width="70" height="70" rx="12" fill="none" stroke="#ffc9f3" stroke-width="3"/>
+
+  <rect x="210" y="55" width="70" height="70" rx="12" fill="#ffb800"/>
+  <rect x="210" y="55" width="70" height="32" rx="12" fill="#ffdd80"/>
+  <rect x="210" y="55" width="70" height="70" rx="12" fill="none" stroke="#ffeab8" stroke-width="3"/>
+</g>
+
+<g font-family="Consolas, 'Cascadia Code', monospace" font-weight="bold" letter-spacing="10">
+  <text x="330" y="152" font-size="78" fill="none" stroke="#00f0ff" stroke-opacity="0.30" stroke-width="10">CUBE</text>
+  <text x="330" y="152" font-size="78" fill="#7ff8ff">CUBE</text>
+  <text x="330" y="248" font-size="78" letter-spacing="4" fill="none" stroke="#ff2bd6" stroke-opacity="0.30" stroke-width="10">CRASH</text>
+  <text x="330" y="248" font-size="78" letter-spacing="4" fill="#ff8fe6">CRASH</text>
+</g>
+<text x="332" y="290" font-family="Consolas, monospace" font-size="15" letter-spacing="3" fill="#5a7a8c">CRASH THE CUBES. CHAIN THE SURGE.</text>
+</svg>
