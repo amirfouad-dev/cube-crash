@@ -19,20 +19,20 @@ class DifficultyTest {
     }
 
     @Test
-    fun `advanced loses one second per 2000 points`() {
-        assertEquals(30, Difficulty.ADVANCED.timerSecondsAt(0))
-        assertEquals(30, Difficulty.ADVANCED.timerSecondsAt(1_999))
-        assertEquals(29, Difficulty.ADVANCED.timerSecondsAt(2_000))
-        assertEquals(29, Difficulty.ADVANCED.timerSecondsAt(3_999))
-        assertEquals(28, Difficulty.ADVANCED.timerSecondsAt(4_000))
-        assertEquals(20, Difficulty.ADVANCED.timerSecondsAt(20_000))
+    fun `advanced starts at 20s and loses one second per 1500 points`() {
+        assertEquals(20, Difficulty.ADVANCED.timerSecondsAt(0))
+        assertEquals(20, Difficulty.ADVANCED.timerSecondsAt(1_499))
+        assertEquals(19, Difficulty.ADVANCED.timerSecondsAt(1_500))
+        assertEquals(19, Difficulty.ADVANCED.timerSecondsAt(2_999))
+        assertEquals(18, Difficulty.ADVANCED.timerSecondsAt(3_000))
+        assertEquals(10, Difficulty.ADVANCED.timerSecondsAt(15_000))
     }
 
     @Test
     fun `advanced timer never drops below the floor`() {
         assertEquals(
             Difficulty.MIN_TIMER_SECONDS,
-            Difficulty.ADVANCED.timerSecondsAt(2_000L * 25),
+            Difficulty.ADVANCED.timerSecondsAt(1_500L * 16),
         )
         assertEquals(
             Difficulty.MIN_TIMER_SECONDS,

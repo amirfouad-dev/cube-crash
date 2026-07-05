@@ -6,15 +6,17 @@ object GameEngine {
 
     const val COLOR_COUNT = 5
 
-    fun newGame(seed: Long): Transition {
+    fun newGame(seed: Long, difficulty: Difficulty = Difficulty.BEGINNER): Transition {
         val rng = GameRng(seed)
         val current = PieceGenerator.dealNext(
             board = 0L, rng = rng, score = 0,
             precedingPieceId = null, recentPieceIds = emptyList(), pressure = 0,
+            difficulty = difficulty,
         )
         val next = PieceGenerator.dealNext(
             board = 0L, rng = rng, score = 0,
             precedingPieceId = current.pieceId, recentPieceIds = listOf(current.pieceId), pressure = 0,
+            difficulty = difficulty,
         )
         val tray = listOf<TrayPiece?>(current, next)
         val state = GameState(
@@ -34,9 +36,13 @@ object GameEngine {
         return Transition(state, listOf(GameEvent.TrayRefilled(tray.filterNotNull())))
     }
 
-    fun reduce(state: GameState, action: GameAction): Transition = when (action) {
-        is GameAction.NewGame -> newGame(action.seed)
-        is GameAction.Place -> place(state, action)
+    fun reduce(
+        state: GameState,
+        action: GameAction,
+        difficulty: Difficulty = Difficulty.BEGINNER,
+    ): Transition = when (action) {
+        is GameAction.NewGame -> newGame(action.seed, difficulty)
+        is GameAction.Place -> place(state, action, difficulty)
         is GameAction.Rotate -> rotate(state, action)
         is GameAction.TimeUp -> timeUp(state)
     }
@@ -84,7 +90,11 @@ object GameEngine {
         return mask
     }
 
-    private fun place(state: GameState, action: GameAction.Place): Transition {
+    private fun place(
+        state: GameState,
+        action: GameAction.Place,
+        difficulty: Difficulty,
+    ): Transition {
         if (state.isGameOver) return Transition(state, emptyList())
         if (action.slot != GameState.ACTIVE_SLOT) return Transition(state, emptyList())
         val trayPiece = state.tray.getOrNull(action.slot) ?: return Transition(state, emptyList())
@@ -164,6 +174,7 @@ object GameEngine {
             precedingPieceId = nextUp?.pieceId,
             recentPieceIds = listOfNotNull(trayPiece.pieceId, nextUp?.pieceId),
             pressure = pressure,
+            difficulty = difficulty,
         )
         val tray = listOf(nextUp, dealt)
         val rngState = rng.state

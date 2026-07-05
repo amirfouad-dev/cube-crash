@@ -134,6 +134,53 @@ class PieceGeneratorTest {
     }
 
     @Test
+    fun `advanced ignores the relief valve under sustained pressure`() {
+        // Same congested setup as the relief-valve test: on ADVANCED the
+        // valve must never force a finisher, so across many seeds at least
+        // one deal is NOT a line finisher (on other difficulties every deal
+        // under this pressure is guaranteed to finish a line).
+        var board = 0L
+        for (r in 0 until 6) board = board or Board.ROW_MASKS[r]
+        board = board and (Board.bit(0, 3) or Board.bit(0, 4)).inv()
+        val metrics = BoardAnalyzer.analyze(board)
+        val sawNonFinisher = (0L until 50L).any { seed ->
+            val dealt = PieceGenerator.dealNext(
+                board, GameRng(seed), score = 0,
+                precedingPieceId = null, recentPieceIds = emptyList(),
+                pressure = PieceGenerator.RELIEF_PRESSURE,
+                difficulty = Difficulty.ADVANCED,
+            )
+            val piece = PieceCatalog.get(dealt.pieceId)
+            !metrics.nearFullLines.any { BoardAnalyzer.finishesLine(piece, it) }
+        }
+        assertTrue(sawNonFinisher, "relief valve appears active on ADVANCED")
+    }
+
+    @Test
+    fun `advanced only guarantees the dealt piece fits the board now`() {
+        // Board where only scattered 1x1 holes remain: after the preceding
+        // 1x1 is placed, plenty of shapes still fit nowhere in sequence, yet
+        // ADVANCED must still deal (guarantee is placeable-now only). On
+        // other difficulties the sequence guarantee applies — verified by
+        // the bot simulation above. Here: every ADVANCED deal fits the
+        // current board, nothing more.
+        val board = scatteredHolesBoard()
+        val bar1x1 = PieceCatalog.ALL.first { it.name == "1x1" }
+        for (seed in 0L until 30L) {
+            val dealt = PieceGenerator.dealNext(
+                board, GameRng(seed), score = 0,
+                precedingPieceId = bar1x1.id, recentPieceIds = listOf(bar1x1.id),
+                pressure = 0,
+                difficulty = Difficulty.ADVANCED,
+            )
+            assertTrue(
+                GameEngine.canPlace(board, PieceCatalog.get(dealt.pieceId)),
+                "ADVANCED dealt a piece that does not fit the current board",
+            )
+        }
+    }
+
+    @Test
     fun `generation is deterministic for a given rng state`() {
         val a = PieceGenerator.dealNext(0L, GameRng(99L), 0, null, emptyList(), 0)
         val b = PieceGenerator.dealNext(0L, GameRng(99L), 0, null, emptyList(), 0)

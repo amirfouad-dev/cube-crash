@@ -76,7 +76,7 @@ class GameViewModel(
             val best = progressRepo.read().highScore
             val chosen = difficulty
                 ?: Difficulty.fromId(settingsRepo.settings.first().preferredDifficulty)
-            val t = GameEngine.newGame(System.nanoTime())
+            val t = GameEngine.newGame(System.nanoTime(), chosen)
             _uiState.value = GameUiState.Playing(t.state, best, isNewBest = false, difficulty = chosen)
             t.events.forEach { _events.tryEmit(it) }
             restartTimer(chosen, t.state.score)
@@ -87,7 +87,7 @@ class GameViewModel(
     fun dispatch(action: GameAction) {
         val current = _uiState.value as? GameUiState.Playing ?: return
         if (action is GameAction.NewGame) { startNewGame(); return }
-        val t = GameEngine.reduce(current.gameState, action)
+        val t = GameEngine.reduce(current.gameState, action, current.difficulty)
         if (t.state === current.gameState) return
 
         val newBest = maxOf(current.bestScore, t.state.score)

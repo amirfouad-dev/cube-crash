@@ -203,7 +203,8 @@ private fun DifficultySelector(
             when (selected) {
                 Difficulty.BEGINNER -> "CLASSIC · NO TIMER"
                 Difficulty.INTERMEDIATE -> "${Difficulty.TIMER_BASE_SECONDS}S TO PLACE EACH PIECE"
-                Difficulty.ADVANCED -> "TIMER DROPS 1S EVERY ${"%,d".format(Difficulty.POINTS_PER_TIMER_STEP)} PTS"
+                Difficulty.ADVANCED ->
+                    "${Difficulty.ADVANCED_BASE_SECONDS}S CLOCK · TRICKY PIECES · NO MERCY"
             },
             color = NeonTheme.HudDim,
             fontSize = 11.sp,
