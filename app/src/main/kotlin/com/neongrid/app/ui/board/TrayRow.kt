@@ -12,6 +12,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -124,7 +129,19 @@ private fun TraySlot(
     slotSize: Dp,
 ) {
     val piece = PieceCatalog.get(trayPiece.pieceId)
-    var bounds = Rect.Zero
+    // The gesture blocks below are keyed on the slot only, so they survive
+    // recomposition and MUST read live values through State rather than
+    // captures. Keying on trayPiece instead is not enough: a freshly dealt
+    // piece that equals the previous one (same shape + color) compares equal,
+    // the old gesture coroutine keeps running, and its captured board()
+    // closure then validates drops against pre-placement, pre-clear occupancy
+    // (drops refused on free cells / no ghost where the real fit is).
+    val currentPiece by rememberUpdatedState(piece)
+    val currentColorId by rememberUpdatedState(trayPiece.colorId)
+    val currentBoard by rememberUpdatedState(board)
+    val currentOnDrop by rememberUpdatedState(onDrop)
+    val currentOnRotate by rememberUpdatedState(onRotate)
+    var bounds by remember { mutableStateOf(Rect.Zero) }
     val isBeingDragged = dragController.dragging?.slot == slot
 
     Canvas(
@@ -134,30 +151,31 @@ private fun TraySlot(
             .graphicsLayer { alpha = if (isBeingDragged) 0.25f else if (placeable) 1f else 0.35f }
             .pointerInput(slot) {
                 // Tap (no drag slop crossed) rotates the piece 90°.
-                detectTapGestures { onRotate(slot) }
+                detectTapGestures { currentOnRotate(slot) }
             }
-            .pointerInput(trayPiece, slot) {
+            .pointerInput(slot) {
                 detectDragGestures(
                     onDragStart = { offset ->
+                        val p = currentPiece
                         dragController.start(
                             slot = slot,
-                            piece = piece,
-                            colorId = trayPiece.colorId,
+                            piece = p,
+                            colorId = currentColorId,
                             grabOffset = offset - Offset(
-                                (size.width - pieceExtent(piece, size.width.toFloat()).first) / 2f,
-                                (size.height - pieceExtent(piece, size.width.toFloat()).second) / 2f,
+                                (size.width - pieceExtent(p, size.width.toFloat()).first) / 2f,
+                                (size.height - pieceExtent(p, size.width.toFloat()).second) / 2f,
                             ),
                             startPos = bounds.topLeft + offset,
                         )
-                        dragController.update(bounds.topLeft + offset, board())
+                        dragController.update(bounds.topLeft + offset, currentBoard())
                     },
                     onDrag = { change, _ ->
                         change.consume()
-                        dragController.update(bounds.topLeft + change.position, board())
+                        dragController.update(bounds.topLeft + change.position, currentBoard())
                     },
                     onDragEnd = {
                         val ghost = dragController.end()
-                        if (ghost != null) onDrop(slot, ghost.row, ghost.col)
+                        if (ghost != null) currentOnDrop(slot, ghost.row, ghost.col)
                     },
                     onDragCancel = { dragController.cancel() },
                 )
