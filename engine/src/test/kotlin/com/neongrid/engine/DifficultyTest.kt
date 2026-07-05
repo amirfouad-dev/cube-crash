@@ -13,9 +13,34 @@ class DifficultyTest {
     }
 
     @Test
-    fun `intermediate is a fixed 30 seconds`() {
+    fun `intermediate starts at 30s and eases down gently to a 10s floor`() {
         assertEquals(30, Difficulty.INTERMEDIATE.timerSecondsAt(0))
-        assertEquals(30, Difficulty.INTERMEDIATE.timerSecondsAt(50_000))
+        assertEquals(30, Difficulty.INTERMEDIATE.timerSecondsAt(2_999))
+        assertEquals(29, Difficulty.INTERMEDIATE.timerSecondsAt(3_000))
+        assertEquals(20, Difficulty.INTERMEDIATE.timerSecondsAt(30_000))
+        assertEquals(
+            Difficulty.INTERMEDIATE_MIN_SECONDS,
+            Difficulty.INTERMEDIATE.timerSecondsAt(1_000_000),
+        )
+    }
+
+    @Test
+    fun `insane starts at 15s and loses one second per 1500 points down to a 3s floor`() {
+        assertEquals(15, Difficulty.INSANE.timerSecondsAt(0))
+        assertEquals(15, Difficulty.INSANE.timerSecondsAt(1_499))
+        assertEquals(14, Difficulty.INSANE.timerSecondsAt(1_500))
+        assertEquals(
+            Difficulty.INSANE_MIN_SECONDS,
+            Difficulty.INSANE.timerSecondsAt(1_000_000),
+        )
+    }
+
+    @Test
+    fun `only insane disables rotation`() {
+        assertEquals(true, Difficulty.BEGINNER.allowsRotation)
+        assertEquals(true, Difficulty.INTERMEDIATE.allowsRotation)
+        assertEquals(true, Difficulty.ADVANCED.allowsRotation)
+        assertEquals(false, Difficulty.INSANE.allowsRotation)
     }
 
     @Test
@@ -43,6 +68,7 @@ class DifficultyTest {
     @Test
     fun `fromId parses names and defaults to beginner`() {
         assertEquals(Difficulty.ADVANCED, Difficulty.fromId("ADVANCED"))
+        assertEquals(Difficulty.INSANE, Difficulty.fromId("INSANE"))
         assertEquals(Difficulty.BEGINNER, Difficulty.fromId("garbage"))
         assertEquals(Difficulty.BEGINNER, Difficulty.fromId(null))
     }

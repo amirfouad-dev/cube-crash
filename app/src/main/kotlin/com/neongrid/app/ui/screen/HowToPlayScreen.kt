@@ -42,11 +42,11 @@ fun HowToPlayScreen(onBack: () -> Unit) {
 
         Rule("👆", "DRAG", "Drag the active piece onto the 8×8 energy grid. The NEXT slot shows what's coming — plan two moves ahead.", NeonTheme.Cyan)
         Rule("🔄", "ROTATE", "Tap the active piece to rotate it 90°.", NeonTheme.Violet)
-        Rule("⏱", "CATEGORIES", "BEGINNER is untimed. INTERMEDIATE gives you 30s to place each piece. ADVANCED starts at 20s, cuts 1s every 1,500 points, deals trickier shapes and no bailouts — a careless placement can trap you.", NeonTheme.Amber)
+        Rule("⏱", "CATEGORIES", "BEGINNER is untimed. INTERMEDIATE eases you in with a 30s clock. ADVANCED starts at 20s, deals trickier shapes with no bailouts, and a careless placement can trap you. INSANE gives you 15s and NO rotation — every piece plays exactly as dealt.", NeonTheme.Amber)
         Rule("⚡", "DISCHARGE", "Fill a complete row or column to clear it in a neon surge. Multiple lines at once score big.", NeonTheme.Magenta)
         Rule("🔥", "COMBO", "Clear again within 3 placements to keep your combo alive — the multiplier climbs to ×3. The heat bar shows how close your streak is to dying.", NeonTheme.Amber)
         Rule("💠", "SHARDS", "Complete daily missions and keep your daily streak to earn shards — spend them on new grid themes.", NeonTheme.Lime)
-        Rule("💀", "GRID FAILURE", "The run ends when no piece fits in any rotation. On BEGINNER and INTERMEDIATE the board never deals you an impossible tray; on ADVANCED only your own planning keeps you alive.", NeonTheme.DangerPulse)
+        Rule("💀", "GRID FAILURE", "The run ends when the active piece no longer fits. BEGINNER, INTERMEDIATE and INSANE never hand you an impossible pair — play carefully and you always have a move. Only ADVANCED can trap you with a bad placement.", NeonTheme.DangerPulse)
 
         Spacer(Modifier.height(24.dp))
         Text(

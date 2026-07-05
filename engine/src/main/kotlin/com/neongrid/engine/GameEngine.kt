@@ -43,9 +43,17 @@ object GameEngine {
     ): Transition = when (action) {
         is GameAction.NewGame -> newGame(action.seed, difficulty)
         is GameAction.Place -> place(state, action, difficulty)
-        is GameAction.Rotate -> rotate(state, action)
+        is GameAction.Rotate -> rotate(state, action, difficulty)
         is GameAction.TimeUp -> timeUp(state)
     }
+
+    /** True if [pieceId] can still be placed, honoring whether [difficulty] allows rotation. */
+    private fun canStillPlay(board: Long, pieceId: Int, difficulty: Difficulty): Boolean =
+        if (difficulty.allowsRotation) {
+            canPlaceAnyRotation(board, pieceId)
+        } else {
+            canPlace(board, PieceCatalog.get(pieceId))
+        }
 
     private fun timeUp(state: GameState): Transition {
         if (state.isGameOver) return Transition(state, emptyList())
@@ -65,8 +73,13 @@ object GameEngine {
         return false
     }
 
-    private fun rotate(state: GameState, action: GameAction.Rotate): Transition {
+    private fun rotate(
+        state: GameState,
+        action: GameAction.Rotate,
+        difficulty: Difficulty,
+    ): Transition {
         if (state.isGameOver) return Transition(state, emptyList())
+        if (!difficulty.allowsRotation) return Transition(state, emptyList())
         if (action.slot != GameState.ACTIVE_SLOT) return Transition(state, emptyList())
         val trayPiece = state.tray.getOrNull(action.slot) ?: return Transition(state, emptyList())
         val newId = PieceCatalog.rotatedId.getValue(trayPiece.pieceId)
@@ -180,8 +193,10 @@ object GameEngine {
         val rngState = rng.state
         events.add(GameEvent.TrayRefilled(listOf(dealt)))
 
-        // Game over: the new active piece fits in no rotation.
-        val isGameOver = nextUp == null || !canPlaceAnyRotation(board, nextUp.pieceId)
+        // Game over: the new active piece can no longer be placed. On INSANE
+        // there is no rotate escape, so this must NOT consider rotations —
+        // otherwise the run "survives" on a piece the player can't turn.
+        val isGameOver = nextUp == null || !canStillPlay(board, nextUp.pieceId, difficulty)
         if (isGameOver) events.add(GameEvent.GameOver)
 
         val newState = state.copy(

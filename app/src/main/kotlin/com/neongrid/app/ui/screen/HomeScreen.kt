@@ -171,18 +171,19 @@ private fun DifficultySelector(
     onSelect: (Difficulty) -> Unit,
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Difficulty.entries.forEach { difficulty ->
                 val isSelected = difficulty == selected
                 val accent = when (difficulty) {
                     Difficulty.BEGINNER -> NeonTheme.Cyan
                     Difficulty.INTERMEDIATE -> NeonTheme.Amber
                     Difficulty.ADVANCED -> NeonTheme.Magenta
+                    Difficulty.INSANE -> NeonTheme.DangerPulse
                 }
                 Text(
                     difficulty.name,
                     color = if (isSelected) accent else NeonTheme.HudDim,
-                    fontSize = 12.sp,
+                    fontSize = 11.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                     fontFamily = FontFamily.Monospace,
                     modifier = Modifier
@@ -194,7 +195,7 @@ private fun DifficultySelector(
                         )
                         .background(if (isSelected) accent.copy(alpha = 0.12f) else Color.Transparent)
                         .clickable { onSelect(difficulty) }
-                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
                 )
             }
         }
@@ -202,9 +203,12 @@ private fun DifficultySelector(
         Text(
             when (selected) {
                 Difficulty.BEGINNER -> "CLASSIC · NO TIMER"
-                Difficulty.INTERMEDIATE -> "${Difficulty.TIMER_BASE_SECONDS}S TO PLACE EACH PIECE"
+                Difficulty.INTERMEDIATE ->
+                    "${Difficulty.INTERMEDIATE_BASE_SECONDS}S CLOCK · EASES YOU IN"
                 Difficulty.ADVANCED ->
                     "${Difficulty.ADVANCED_BASE_SECONDS}S CLOCK · TRICKY PIECES · NO MERCY"
+                Difficulty.INSANE ->
+                    "${Difficulty.INSANE_BASE_SECONDS}S · NO ROTATE · USE PIECES AS DEALT"
             },
             color = NeonTheme.HudDim,
             fontSize = 11.sp,

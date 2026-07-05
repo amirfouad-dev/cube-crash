@@ -7,11 +7,11 @@ package com.neongrid.engine
  * at the moment it is dealt. The player can still trap themselves by placing
  * the active piece badly — that's the skill.
  *
- * ADVANCED drops the training wheels: no congestion bailout weights, no
- * relief valve, a heavier dose of awkward shapes, a weaker line-finisher
- * bonus, and the fairness guarantee relaxes to "fits the board at deal
- * time" — the [active, next] pair is NOT sequence-checked, so a greedy
- * placement can genuinely trap you (the game-over flag catches it).
+ * Per-difficulty behavior is driven entirely by [GenParams] (see
+ * [Difficulty.gen]): higher tiers switch off the congestion bailout and
+ * relief valve, deal more awkward shapes, weaken the line-finisher bonus,
+ * and (ADVANCED) drop the joint-solvability guarantee to "fits the board at
+ * deal time" so a greedy placement can genuinely trap you.
  */
 object PieceGenerator {
 
@@ -21,9 +21,6 @@ object PieceGenerator {
     private const val SOLVER_NODE_BUDGET = 20_000
     /** Congested deals in a row (one per placement) before the relief valve opens. */
     const val RELIEF_PRESSURE = 5
-    private const val FINISHER_BONUS = 1.8f
-    private const val ADVANCED_FINISHER_BONUS = 1.2f
-    private const val ADVANCED_AWKWARD_BOOST = 1.6f
 
     // Score bands: index by score thresholds.
     private val BAND_THRESHOLDS = longArrayOf(1_500, 6_000, 20_000)
@@ -59,7 +56,7 @@ object PieceGenerator {
         pressure: Int,
         difficulty: Difficulty = Difficulty.BEGINNER,
     ): TrayPiece {
-        val hardcore = difficulty == Difficulty.ADVANCED
+        val params = difficulty.gen
         val metrics = BoardAnalyzer.analyze(board)
         val band = band(score)
         val weights = FloatArray(PieceCatalog.ALL.size)
@@ -67,16 +64,16 @@ object PieceGenerator {
             var w = piece.baseWeight * bandMultiplier(band, piece)
             // Gentle opening: big pieces stay rare before the first band.
             if (band == 0 && piece.cellCount >= 5) w *= 0.6f
-            if (hardcore && piece.awkward) w *= ADVANCED_AWKWARD_BOOST
-            if (!hardcore && metrics.fillRatio > CONGESTION_WEIGHT_FILL) {
+            if (piece.awkward && params.awkwardBoost != 1.0f) w *= params.awkwardBoost
+            if (metrics.fillRatio > CONGESTION_WEIGHT_FILL) {
                 w *= when {
-                    piece.cellCount <= 3 -> 2.5f
-                    piece.cellCount >= 6 -> 0.3f
+                    piece.cellCount <= 3 -> params.congestionSmallBoost
+                    piece.cellCount >= 6 -> params.congestionBigSuppress
                     else -> 1.0f
                 }
             }
             if (metrics.nearFullLines.any { BoardAnalyzer.finishesLine(piece, it) }) {
-                w *= if (hardcore) ADVANCED_FINISHER_BONUS else FINISHER_BONUS
+                w *= params.finisherBonus
             }
             if (piece.id in recentPieceIds) w *= 0.4f
             if (!GameEngine.canPlace(board, piece)) w *= 0.05f
@@ -87,20 +84,20 @@ object PieceGenerator {
         var chosen: Piece? = null
         for (attempt in 0 until RESAMPLE_ATTEMPTS) {
             val candidate = roulette(weights, rng) ?: PieceCatalog.ALL[0]
-            if (dealSolvable(board, preceding, candidate, hardcore)) {
+            if (dealSolvable(board, preceding, candidate, params)) {
                 chosen = candidate
                 break
             }
         }
-        if (chosen == null) chosen = bestSolvableFallback(board, preceding, weights, hardcore)
+        if (chosen == null) chosen = bestSolvableFallback(board, preceding, weights, params)
 
         // Relief valve: sustained congestion → guarantee a line-finisher (or 1x1).
-        if (!hardcore && pressure >= RELIEF_PRESSURE &&
+        if (params.reliefValve && pressure >= RELIEF_PRESSURE &&
             !finishesAnyLine(chosen, metrics) &&
             (preceding == null || !finishesAnyLine(preceding, metrics))
         ) {
             val relief = reliefPiece(metrics)
-            if (dealSolvable(board, preceding, relief, hardcore)) chosen = relief
+            if (dealSolvable(board, preceding, relief, params)) chosen = relief
         }
 
         return TrayPiece(chosen.id, (1 + rng.nextInt(GameEngine.COLOR_COUNT)).toByte())
@@ -108,16 +105,18 @@ object PieceGenerator {
 
     /**
      * Can [candidate] be placed after [preceding] (in that order, clears
-     * applied)? On [hardcore] the sequence check is skipped — the candidate
-     * only has to fit the board as it stands at deal time.
+     * applied)? When [params] does not require sequence-solvability the check
+     * relaxes to "fits the board as it stands at deal time".
      */
     private fun dealSolvable(
         board: Long,
         preceding: Piece?,
         candidate: Piece,
-        hardcore: Boolean,
+        params: GenParams,
     ): Boolean {
-        if (hardcore || preceding == null) return GameEngine.canPlace(board, candidate)
+        if (!params.requireSequenceSolvable || preceding == null) {
+            return GameEngine.canPlace(board, candidate)
+        }
         return sequencePlaceable(board, preceding, candidate)
     }
 
@@ -157,11 +156,11 @@ object PieceGenerator {
         board: Long,
         preceding: Piece?,
         weights: FloatArray,
-        hardcore: Boolean,
+        params: GenParams,
     ): Piece {
         val ranked = PieceCatalog.ALL.sortedByDescending { weights[it.id] }
         for (piece in ranked) {
-            if (dealSolvable(board, preceding, piece, hardcore)) return piece
+            if (dealSolvable(board, preceding, piece, params)) return piece
         }
         return ranked.firstOrNull { GameEngine.canPlace(board, it) } ?: PieceCatalog.ALL[0]
     }

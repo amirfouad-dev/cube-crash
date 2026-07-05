@@ -210,6 +210,7 @@ fun GameScreen(
                         board = game.board,
                         dragController = dragController,
                         theme = theme,
+                        allowRotation = state.difficulty.allowsRotation,
                         onDrop = { slot, row, col ->
                             viewModel.dispatch(GameAction.Place(slot, row, col))
                         },

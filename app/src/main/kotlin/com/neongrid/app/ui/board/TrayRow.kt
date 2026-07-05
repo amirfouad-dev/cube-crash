@@ -53,6 +53,7 @@ fun TrayRow(
     onDrop: (slot: Int, row: Int, col: Int) -> Unit,
     onRotate: (slot: Int) -> Unit,
     modifier: Modifier = Modifier,
+    allowRotation: Boolean = true,
     slotSize: Dp = 96.dp,
 ) {
     val active = tray.getOrNull(GameState.ACTIVE_SLOT)
@@ -64,15 +65,20 @@ fun TrayRow(
     ) {
         Box(modifier = Modifier.size(slotSize), contentAlignment = Alignment.Center) {
             if (active != null) {
+                val placeable = if (allowRotation) {
+                    GameEngine.canPlaceAnyRotation(board, active.pieceId)
+                } else {
+                    GameEngine.canPlace(board, PieceCatalog.get(active.pieceId))
+                }
                 TraySlot(
                     slot = GameState.ACTIVE_SLOT,
                     trayPiece = active,
-                    placeable = GameEngine.canPlaceAnyRotation(board, active.pieceId),
+                    placeable = placeable,
                     board = { board },
                     dragController = dragController,
                     theme = theme,
                     onDrop = onDrop,
-                    onRotate = onRotate,
+                    onRotate = if (allowRotation) onRotate else null,
                     slotSize = slotSize,
                 )
             }
@@ -125,7 +131,7 @@ private fun TraySlot(
     dragController: DragController,
     theme: com.neongrid.app.meta.GameTheme,
     onDrop: (slot: Int, row: Int, col: Int) -> Unit,
-    onRotate: (slot: Int) -> Unit,
+    onRotate: ((slot: Int) -> Unit)?,
     slotSize: Dp,
 ) {
     val piece = PieceCatalog.get(trayPiece.pieceId)
@@ -150,8 +156,9 @@ private fun TraySlot(
             .onGloballyPositioned { bounds = it.boundsInRoot() }
             .graphicsLayer { alpha = if (isBeingDragged) 0.25f else if (placeable) 1f else 0.35f }
             .pointerInput(slot) {
-                // Tap (no drag slop crossed) rotates the piece 90°.
-                detectTapGestures { currentOnRotate(slot) }
+                // Tap (no drag slop crossed) rotates the piece 90°. On INSANE
+                // rotation is disabled (onRotate is null), so the tap is inert.
+                detectTapGestures { currentOnRotate?.invoke(slot) }
             }
             .pointerInput(slot) {
                 detectDragGestures(
