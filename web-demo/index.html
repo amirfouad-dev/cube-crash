@@ -38,6 +38,10 @@
     color: #00f0ff; font-size: 20px; cursor: pointer; z-index: 20;
     display: flex; align-items: center; justify-content: center; }
   #muteBtn.off { border-color: #5a7a8c; color: #5a7a8c; background: transparent; }
+  #homeBtn { position: fixed; top: 14px; left: 14px; width: 44px; height: 44px;
+    border-radius: 50%; border: 2px solid #9d4dff; background: rgba(157,77,255,.08);
+    color: #9d4dff; font-size: 22px; cursor: pointer; z-index: 20;
+    display: none; align-items: center; justify-content: center; }
   #helpBtn { position: fixed; top: 14px; right: 68px; width: 44px; height: 44px;
     border-radius: 50%; border: 2px solid #ffb800; background: rgba(255,184,0,.08);
     color: #ffb800; font-size: 20px; cursor: pointer; z-index: 20;
@@ -112,6 +116,7 @@
   <button id="playBtn" onclick="startPlay()">BOOT GRID</button>
   <button class="ghostBtn" onclick="toggleHelp()">HOW TO PLAY</button>
 </div>
+<div id="homeBtn" onclick="goHome()" title="main menu">⌂</div>
 <div id="muteBtn" onclick="toggleAudio()" title="mute / unmute">♪</div>
 <div id="helpBtn" onclick="toggleHelp()" title="how to play">?</div>
 <div id="help" onclick="toggleHelp()">
@@ -417,6 +422,7 @@ function endGame(timedOut) {
   document.getElementById("finalScore").textContent = score.toLocaleString();
   document.getElementById("finalStats").textContent =
     `${difficulty}   ·   MAX COMBO x${maxCombo}   ·   LINES ${lines}`;
+  document.getElementById("homeBtn").style.display = "none";
   document.getElementById("over").style.display = "flex";
 }
 
@@ -508,6 +514,7 @@ function startMusicNow() {
 function showIntro() {
   document.getElementById("introBest").textContent = best.toLocaleString();
   document.getElementById("intro").style.display = "flex";
+  document.getElementById("homeBtn").style.display = "none";
   started = false;
 }
 function selectDifficulty(d) {
@@ -520,6 +527,7 @@ function startPlay() {
   newGame(selectedDifficulty);
   started = true;
   document.getElementById("intro").style.display = "none";
+  document.getElementById("homeBtn").style.display = "flex";
   startMusic();
 }
 function goHome() {
