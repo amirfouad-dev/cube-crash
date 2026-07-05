@@ -19,6 +19,11 @@
            border-radius: 3px; margin: 10px 0 4px; overflow: hidden; }
   #meterFill { height: 100%; width: 0%; border-radius: 3px;
            background: linear-gradient(90deg, #00f0ff, #ff2bd6, #ffb800); transition: width .3s; }
+  #timerWrap { width: min(92vw, 440px); height: 8px; background: rgba(255,255,255,.08);
+           border-radius: 4px; margin: 2px 0 4px; overflow: hidden; display: none; }
+  #timerFill { height: 100%; width: 100%; border-radius: 4px; background: #00f0ff;
+           transition: width .1s linear, background-color .3s; }
+  #diffTag { color: #5a7a8c; font-size: 10px; letter-spacing: 2px; margin-bottom: 4px; height: 12px; }
   canvas { display: block; }
   #over { position: fixed; inset: 0; background: rgba(10,10,18,.92); display: none;
           flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
@@ -27,7 +32,7 @@
   #over .stats { color: #5a7a8c; margin: 12px 0 32px; }
   #over button { background: #00f0ff; color: #0a0a12; border: 0; border-radius: 26px;
           padding: 14px 44px; font: bold 18px monospace; letter-spacing: 2px; cursor: pointer; }
-  #hint { color: #3a4a58; font-size: 11px; margin-top: 6px; }
+  #hint { color: #3a4a58; font-size: 11px; margin-top: 6px; text-align: center; width: min(92vw,440px); }
   #muteBtn { position: fixed; top: 14px; right: 14px; width: 44px; height: 44px;
     border-radius: 50%; border: 2px solid #00f0ff; background: rgba(0,240,255,.08);
     color: #00f0ff; font-size: 20px; cursor: pointer; z-index: 20;
@@ -52,8 +57,20 @@
     z-index: 15; }
   #intro .t1 { color: #00f0ff; font-size: 56px; font-weight: bold; letter-spacing: 6px; margin: 0; }
   #intro .t2 { color: #ff2bd6; font-size: 56px; font-weight: bold; letter-spacing: 6px; margin: 0 0 18px; }
-  #intro .stat { color: #9d4dff; font-size: 15px; margin-bottom: 40px; letter-spacing: 2px; }
+  #intro .stat { color: #9d4dff; font-size: 15px; margin-bottom: 22px; letter-spacing: 2px; }
   #intro .stat b { color: #b8f6ff; }
+  #diffSel { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap;
+    justify-content: center; max-width: 92vw; }
+  .diff { background: transparent; color: #5a7a8c; border: 1px solid #26333d;
+    border-radius: 8px; padding: 8px 10px; font: bold 11px monospace; letter-spacing: 1px;
+    cursor: pointer; }
+  .diff.sel { color: #0a0a12; }
+  .diff.sel[data-d="BEGINNER"]     { background: #00f0ff; border-color: #00f0ff; }
+  .diff.sel[data-d="INTERMEDIATE"] { background: #ffb800; border-color: #ffb800; }
+  .diff.sel[data-d="ADVANCED"]     { background: #ff2bd6; border-color: #ff2bd6; }
+  .diff.sel[data-d="INSANE"]       { background: #ff2b4e; border-color: #ff2b4e; color: #fff; }
+  #diffBlurb { color: #5a7a8c; font-size: 12px; margin-bottom: 26px; letter-spacing: 1px;
+    height: 14px; }
   #playBtn { background: #00f0ff; color: #0a0a12; border: 0; border-radius: 30px;
     padding: 16px 60px; font: bold 22px monospace; letter-spacing: 3px; cursor: pointer; }
   .ghostBtn { margin-top: 18px; background: transparent; color: #ffb800;
@@ -85,6 +102,13 @@
   <h1 class="t1">CUBE</h1>
   <h1 class="t2">CRASH</h1>
   <div class="stat">BEST <b id="introBest">0</b></div>
+  <div id="diffSel">
+    <button class="diff" data-d="BEGINNER" onclick="selectDifficulty('BEGINNER')">BEGINNER</button>
+    <button class="diff" data-d="INTERMEDIATE" onclick="selectDifficulty('INTERMEDIATE')">INTERMEDIATE</button>
+    <button class="diff" data-d="ADVANCED" onclick="selectDifficulty('ADVANCED')">ADVANCED</button>
+    <button class="diff" data-d="INSANE" onclick="selectDifficulty('INSANE')">INSANE</button>
+  </div>
+  <div id="diffBlurb">CLASSIC · NO TIMER</div>
   <button id="playBtn" onclick="startPlay()">BOOT GRID</button>
   <button class="ghostBtn" onclick="toggleHelp()">HOW TO PLAY</button>
 </div>
@@ -92,11 +116,12 @@
 <div id="helpBtn" onclick="toggleHelp()" title="how to play">?</div>
 <div id="help" onclick="toggleHelp()">
   <div class="card">
-    <div class="rule"><div class="glyph">👆</div><div><b style="color:#00f0ff">DRAG</b><span>Drag pieces from the tray onto the 8×8 grid.</span></div></div>
-    <div class="rule"><div class="glyph">🔄</div><div><b style="color:#9d4dff">ROTATE</b><span>Tap a piece to rotate it 90°.</span></div></div>
+    <div class="rule"><div class="glyph">👆</div><div><b style="color:#00f0ff">DRAG</b><span>Drag the active piece onto the 8×8 grid. The NEXT slot shows what's coming — plan two moves ahead.</span></div></div>
+    <div class="rule"><div class="glyph">🔄</div><div><b style="color:#9d4dff">ROTATE</b><span>Tap the active piece to rotate it 90°. (Disabled on INSANE — pieces play as dealt.)</span></div></div>
+    <div class="rule"><div class="glyph">⏱</div><div><b style="color:#ffb800">CATEGORIES</b><span>BEGINNER is untimed. INTERMEDIATE eases you in at 30s. ADVANCED gives 20s with trickier pieces and no bailouts. INSANE gives 15s and NO rotation.</span></div></div>
     <div class="rule"><div class="glyph">⚡</div><div><b style="color:#ff2bd6">DISCHARGE</b><span>Fill a full row or column to clear it. Multiple lines at once score big.</span></div></div>
     <div class="rule"><div class="glyph">🔥</div><div><b style="color:#ffb800">COMBO</b><span>Clear again within 3 placements to keep the multiplier climbing (up to ×3).</span></div></div>
-    <div class="rule"><div class="glyph">💀</div><div><b style="color:#ff2b4e">GRID FAILURE</b><span>Game over when nothing fits in any rotation. The game never deals an impossible tray — plan ahead.</span></div></div>
+    <div class="rule"><div class="glyph">💀</div><div><b style="color:#ff2b4e">GRID FAILURE</b><span>The run ends when the active piece no longer fits — or the clock runs out on a timed tier.</span></div></div>
     <div style="text-align:center"><button>GOT IT</button></div>
   </div>
 </div>
@@ -107,14 +132,16 @@
     <div><div class="label" style="text-align:right">BEST</div><div id="best">0</div></div>
   </div>
   <div id="meter"><div id="meterFill"></div></div>
+  <div id="timerWrap"><div id="timerFill"></div></div>
+  <div id="diffTag"></div>
   <canvas id="game"></canvas>
-  <div id="hint">tap a piece to rotate · drag it onto the grid — full rows / columns discharge</div>
+  <div id="hint">tap the active piece to rotate · drag it onto the grid — full rows / columns discharge</div>
 </div>
 <div id="over">
-  <h1>GRID FAILURE</h1>
+  <h1 id="overTitle">GRID FAILURE</h1>
   <div class="final" id="finalScore">0</div>
   <div class="stats" id="finalStats"></div>
-  <button onclick="newGame()">REBOOT GRID</button>
+  <button onclick="newGame(difficulty)">REBOOT GRID</button>
   <button class="homeLink" onclick="goHome()">HOME</button>
 </div>
 <script>
@@ -123,7 +150,7 @@
 const COLORS = ["#00f0ff", "#ff2bd6", "#9d4dff", "#b4ff39", "#ffb800"];
 const BG = "#0a0a12";
 
-// ---------- piece catalog (ported from PieceCatalog.kt) ----------
+// ---------- piece catalog (ported from PieceCatalog.kt; rotations are entries) ----------
 function rect(rows, cols, w) {
   const cells = [];
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) cells.push([r, c]);
@@ -151,6 +178,32 @@ PIECES.forEach((p, i) => {
   p.wd = Math.max(...p.cells.map(c => c[1])) + 1;
   p.n = p.cells.length;
 });
+// 1xN / Nx1 bars indexed by length, for line-finisher / relief lookups.
+const horizontalBars = {}, verticalBars = {};
+PIECES.forEach(p => { if (p.h === 1) horizontalBars[p.wd] = p; if (p.wd === 1) verticalBars[p.h] = p; });
+
+// ---------- difficulty (ported from Difficulty.kt) ----------
+const DIFFICULTIES = {
+  BEGINNER:     { timed:false, rotate:true,  base:0,  step:1, floor:0,
+                  gen:{ smallBoost:2.5, bigSuppress:0.3, relief:true,  finisher:1.8, awkward:1.0, requireSeq:true } },
+  INTERMEDIATE: { timed:true,  rotate:true,  base:30, step:3000, floor:10,
+                  gen:{ smallBoost:1.5, bigSuppress:0.6, relief:true,  finisher:1.5, awkward:1.2, requireSeq:true } },
+  ADVANCED:     { timed:true,  rotate:true,  base:20, step:1500, floor:4,
+                  gen:{ smallBoost:1.0, bigSuppress:1.0, relief:false, finisher:1.2, awkward:1.6, requireSeq:false } },
+  INSANE:       { timed:true,  rotate:false, base:15, step:1500, floor:3,
+                  gen:{ smallBoost:1.0, bigSuppress:1.0, relief:false, finisher:1.2, awkward:1.6, requireSeq:true } },
+};
+const DIFF_BLURB = {
+  BEGINNER: "CLASSIC · NO TIMER",
+  INTERMEDIATE: "30S CLOCK · EASES YOU IN",
+  ADVANCED: "20S · TRICKY PIECES · NO MERCY",
+  INSANE: "15S · NO ROTATE · USE PIECES AS DEALT",
+};
+function timerSecondsAt(diff, score) {
+  const d = DIFFICULTIES[diff];
+  if (!d.timed) return null;
+  return Math.max(d.floor, d.base - Math.floor(score / d.step));
+}
 
 // ---------- board helpers ----------
 const N = 8;
@@ -158,11 +211,19 @@ function canPlaceAt(board, piece, r, c) {
   if (r < 0 || c < 0 || r + piece.h > N || c + piece.wd > N) return false;
   return piece.cells.every(([dr, dc]) => !board[(r + dr) * N + c + dc]);
 }
-function anyPlacement(board, piece) {
+function canPlace(board, piece) { // fits somewhere in its current orientation
   for (let r = 0; r <= N - piece.h; r++)
     for (let c = 0; c <= N - piece.wd; c++)
       if (canPlaceAt(board, piece, r, c)) return true;
   return false;
+}
+function canPlaceAnyRotation(board, piece) {
+  let p = piece;
+  for (let i = 0; i < 4; i++) { if (canPlace(board, p)) return true; p = rotatePiece(p); }
+  return false;
+}
+function canStillPlay(board, piece, diff) {
+  return DIFFICULTIES[diff].rotate ? canPlaceAnyRotation(board, piece) : canPlace(board, piece);
 }
 function fullLines(board) {
   const rows = [], cols = [];
@@ -180,98 +241,138 @@ function applyClears(board) {
   return b;
 }
 
-// ---------- adaptive generator (ported from PieceGenerator.kt) ----------
-function traySolvable(board, pieces) {
-  let budget = 20000;
-  const seen = new Set();
-  function dfs(b, remaining) {
-    if (!remaining.length) return true;
-    if (budget-- <= 0) return false;
-    const key = b.join("") + "|" + remaining.map(p => p.id).sort().join(",");
-    if (seen.has(key)) return false;
-    seen.add(key);
-    for (let i = 0; i < remaining.length; i++) {
-      const piece = remaining[i];
-      for (let r = 0; r <= N - piece.h; r++)
-        for (let c = 0; c <= N - piece.wd; c++) {
-          if (!canPlaceAt(b, piece, r, c)) continue;
-          const nb = b.slice();
-          piece.cells.forEach(([dr, dc]) => nb[(r + dr) * N + c + dc] = 1);
-          if (dfs(applyClears(nb), remaining.filter((_, j) => j !== i))) return true;
-        }
-    }
-    return false;
-  }
-  return dfs(board.map(v => v ? 1 : 0), pieces);
-}
-function band(score) { return score >= 20000 ? 3 : score >= 6000 ? 2 : score >= 1500 ? 1 : 0; }
-function generateTray(board, score, prevIds, pressure) {
+// ---------- board analysis (ported from BoardAnalyzer.kt) ----------
+function analyze(board) {
   const fill = board.filter(Boolean).length / 64;
+  const near = [];
+  for (let i = 0; i < N; i++) {
+    let rowFilled = 0, colFilled = 0;
+    const rowGap = [], colGap = [];
+    for (let k = 0; k < N; k++) {
+      if (board[i * N + k]) rowFilled++; else rowGap.push(k);
+      if (board[k * N + i]) colFilled++; else colGap.push(k);
+    }
+    if (rowFilled >= 5 && rowFilled <= 7) near.push({ isRow: true, index: i, filled: rowFilled, gap: rowGap });
+    if (colFilled >= 5 && colFilled <= 7) near.push({ isRow: false, index: i, filled: colFilled, gap: colGap });
+  }
+  return { fill, near };
+}
+function contiguousGapLength(line) {
+  const g = line.gap;
+  if (!g.length) return null;
+  for (let k = 1; k < g.length; k++) if (g[k] !== g[k - 1] + 1) return null;
+  return g.length;
+}
+function finishesLine(piece, line) {
+  const len = contiguousGapLength(line);
+  if (len == null) return false;
+  return line.isRow ? (piece.h === 1 && piece.wd === len) : (piece.wd === 1 && piece.h === len);
+}
+function finishesAnyLine(piece, metrics) { return metrics.near.some(l => finishesLine(piece, l)); }
+function reliefPiece(metrics) {
+  let target = null;
+  for (const l of metrics.near) if (!target || l.filled > target.filled) target = l;
+  if (target) {
+    const len = contiguousGapLength(target);
+    if (len != null) { const bar = target.isRow ? horizontalBars[len] : verticalBars[len]; if (bar) return bar; }
+  }
+  return PIECES[0]; // 1x1
+}
+
+// ---------- adaptive generator (ported from PieceGenerator.kt) ----------
+function band(score) { return score >= 20000 ? 3 : score >= 6000 ? 2 : score >= 1500 ? 1 : 0; }
+function bandMultiplier(bd, p) {
+  const bySize = p.n <= 2 ? [1.2, 1.0, 0.8, 0.7][bd] : p.n >= 5 ? [0.7, 1.0, 1.3, 1.5][bd] : 1.0;
+  const byAwk = p.awkward ? [0.5, 0.8, 1.1, 1.4][bd] : 1.0;
+  return bySize * byAwk;
+}
+function sequencePlaceable(board, first, second) {
+  let budget = 20000;
+  for (let r = 0; r <= N - first.h; r++)
+    for (let c = 0; c <= N - first.wd; c++) {
+      if (!canPlaceAt(board, first, r, c)) continue;
+      if (budget-- <= 0) return false;
+      const nb = board.slice();
+      first.cells.forEach(([dr, dc]) => nb[(r + dr) * N + c + dc] = 1);
+      if (canPlace(applyClears(nb), second)) return true;
+    }
+  return false;
+}
+function dealSolvable(board, preceding, cand, gen) {
+  if (!gen.requireSeq || !preceding) return canPlace(board, cand);
+  return sequencePlaceable(board, preceding, cand);
+}
+function rouletteFrom(weights) {
+  const total = weights.reduce((a, b) => a + b, 0);
+  if (total <= 0) return PIECES[0];
+  let pick = Math.random() * total;
+  for (const p of PIECES) { pick -= weights[p.id]; if (pick <= 0) return p; }
+  return PIECES[PIECES.length - 1];
+}
+function bestSolvableFallback(board, preceding, weights, gen) {
+  const ranked = PIECES.slice().sort((a, b) => weights[b.id] - weights[a.id]);
+  for (const p of ranked) if (dealSolvable(board, preceding, p, gen)) return p;
+  return ranked.find(p => canPlace(board, p)) || PIECES[0];
+}
+// Deal ONE piece. `preceding` is the piece placed before it (the current
+// active), or null for the very first deal.
+function dealNext(board, score, preceding, recentIds, pressure, diff) {
+  const gen = DIFFICULTIES[diff].gen;
+  const metrics = analyze(board);
   const bd = band(score);
-  const smallM = [1.2, 1.0, 0.8, 0.7][bd], largeM = [0.7, 1.0, 1.3, 1.5][bd], awkM = [0.5, 0.8, 1.1, 1.4][bd];
   const weights = PIECES.map(p => {
-    let w = p.w * (p.n <= 2 ? smallM : p.n >= 5 ? largeM : 1) * (p.awkward ? awkM : 1);
-    if (fill > 0.65) w *= p.n <= 3 ? 2.5 : p.n >= 6 ? 0.3 : 1;
-    if (prevIds.includes(p.id)) w *= 0.4;
-    if (!anyPlacement(board, p)) w *= 0.05;
+    let w = p.w * bandMultiplier(bd, p);
+    if (bd === 0 && p.n >= 5) w *= 0.6;
+    if (p.awkward && gen.awkward !== 1.0) w *= gen.awkward;
+    if (metrics.fill > 0.65) w *= (p.n <= 3 ? gen.smallBoost : p.n >= 6 ? gen.bigSuppress : 1.0);
+    if (finishesAnyLine(p, metrics)) w *= gen.finisher;
+    if (recentIds.includes(p.id)) w *= 0.4;
+    if (!canPlace(board, p)) w *= 0.05;
     return w;
   });
-  function roulette() {
-    const total = weights.reduce((a, b) => a + b, 0);
-    let pick = Math.random() * total;
-    for (const p of PIECES) { pick -= weights[p.id]; if (pick <= 0) return p; }
-    return PIECES[0];
+  let chosen = null;
+  for (let a = 0; a < 6 && !chosen; a++) {
+    const cand = rouletteFrom(weights);
+    if (dealSolvable(board, preceding, cand, gen)) chosen = cand;
   }
-  function sample() {
-    const out = []; let big = bd <= 1 ? 1 : 3;
-    while (out.length < 3) {
-      const p = roulette();
-      if (p.n >= 5) { if (!big) continue; big--; }
-      out.push(p);
-    }
-    return out;
+  if (!chosen) chosen = bestSolvableFallback(board, preceding, weights, gen);
+  if (gen.relief && pressure >= 5 && !finishesAnyLine(chosen, metrics) &&
+      (!preceding || !finishesAnyLine(preceding, metrics))) {
+    const relief = reliefPiece(metrics);
+    if (dealSolvable(board, preceding, relief, gen)) chosen = relief;
   }
-  let tray = null;
-  for (let a = 0; a < 6 && !tray; a++) {
-    const s = sample();
-    if (traySolvable(board, s)) tray = s;
-  }
-  if (!tray) { // greedy construct: solvable by construction
-    tray = []; let sim = board.slice();
-    for (let k = 0; k < 3; k++) {
-      const cands = PIECES.filter(p => anyPlacement(sim, p)).sort((a, b) => weights[b.id] - weights[a.id]);
-      const p = cands[0] || PIECES[0];
-      tray.push(p);
-      outer: for (let r = 0; r <= N - p.h; r++) for (let c = 0; c <= N - p.wd; c++)
-        if (canPlaceAt(sim, p, r, c)) {
-          p.cells.forEach(([dr, dc]) => sim[(r + dr) * N + c + dc] = 1);
-          sim = applyClears(sim); break outer;
-        }
-    }
-  }
-  if (pressure >= 2) { // relief valve: swap in a 1x1 if nothing fits congestion
-    if (!tray.some(p => p.n <= 2)) { tray[0] = PIECES[0]; }
-  }
-  return tray.map(p => ({ piece: p, color: 1 + Math.floor(Math.random() * 5) }));
+  return { piece: chosen, color: 1 + Math.floor(Math.random() * 5) };
 }
 
 // ---------- game state ----------
-let board, colors, tray, score, best, combo, sinceClear, maxCombo, lines, pressure, gameOver;
+let board, colors, active, next, score, best, combo, sinceClear, maxCombo, lines, pressure, gameOver;
+let difficulty = "BEGINNER", selectedDifficulty = "BEGINNER", started = false;
+let timerTotal = null, timeLeft = 0;
 best = +(localStorage.getItem("ng_best") || 0);
 
-function newGame() {
+function newGame(diff) {
+  difficulty = diff || selectedDifficulty;
   board = new Array(64).fill(0); colors = new Array(64).fill(0);
-  tray = generateTray(board, 0, [], 0);
   score = 0; combo = 0; sinceClear = 0; maxCombo = 0; lines = 0; pressure = 0; gameOver = false;
+  active = dealNext(board, 0, null, [], 0, difficulty);
+  next = dealNext(board, 0, active.piece, [active.piece.id], 0, difficulty);
+  resetTimer();
   document.getElementById("over").style.display = "none";
+  document.getElementById("diffTag").textContent = difficulty;
   updateHud();
 }
 
-function place(slot, r, c) {
-  const t = tray[slot];
-  if (!t || !canPlaceAt(board, t.piece, r, c)) return;
-  t.piece.cells.forEach(([dr, dc]) => { const i = (r + dr) * N + c + dc; board[i] = 1; colors[i] = t.color; });
-  score += t.piece.n;
+function resetTimer() {
+  timerTotal = timerSecondsAt(difficulty, score);
+  timeLeft = timerTotal == null ? 0 : timerTotal;
+}
+
+function place(r, c) {
+  if (gameOver) return;
+  const placed = active;
+  if (!placed || !canPlaceAt(board, placed.piece, r, c)) return;
+  placed.piece.cells.forEach(([dr, dc]) => { const i = (r + dr) * N + c + dc; board[i] = 1; colors[i] = placed.color; });
+  score += placed.piece.n;
   beep(220, 0.05, 0.15);
   const { rows, cols } = fullLines(board);
   const nLines = rows.length + cols.length;
@@ -284,7 +385,7 @@ function place(slot, r, c) {
     rows.forEach(rr => { for (let cc = 0; cc < N; cc++) cleared.push(rr * N + cc); });
     cols.forEach(cc => { for (let rr = 0; rr < N; rr++) if (!cleared.includes(rr * N + cc)) cleared.push(rr * N + cc); });
     cleared.forEach(i => {
-      spawnParticles(i % N, Math.floor(i / N), colors[i] || t.color);
+      spawnParticles(i % N, Math.floor(i / N), colors[i] || placed.color);
       board[i] = 0; colors[i] = 0;
     });
     addTrauma(0.2 + 0.15 * nLines);
@@ -295,20 +396,28 @@ function place(slot, r, c) {
     sinceClear++;
     if (combo > 0 && sinceClear >= 3) { combo = 0; beep(260, 0.2, 0.2, "down"); }
   }
-  tray[slot] = null;
-  if (tray.every(v => !v)) {
-    const fill = board.filter(Boolean).length / 64;
-    pressure = fill > 0.7 ? pressure + 1 : 0;
-    tray = generateTray(board, score, [], pressure);
-  }
+  // The preview becomes active; deal a fresh preview behind it.
+  const fill = board.filter(Boolean).length / 64;
+  pressure = fill > 0.70 ? pressure + 1 : 0;
+  const newActive = next;
+  const dealt = dealNext(board, score, newActive.piece, [placed.piece.id, newActive.piece.id], pressure, difficulty);
+  active = newActive;
+  next = dealt;
   if (score > best) { best = score; localStorage.setItem("ng_best", best); }
-  if (!tray.filter(Boolean).some(t2 => anyPlacement(board, t2.piece))) {
-    gameOver = true; beep(160, 0.5, 0.4, "down");
-    document.getElementById("finalScore").textContent = score.toLocaleString();
-    document.getElementById("finalStats").textContent = `MAX COMBO x${maxCombo}   LINES ${lines}`;
-    document.getElementById("over").style.display = "flex";
-  }
+  // Game over: the new active piece can no longer be placed (no rotation on INSANE).
+  if (!canStillPlay(board, active.piece, difficulty)) { endGame(false); }
+  else { resetTimer(); }
   updateHud();
+}
+
+function endGame(timedOut) {
+  gameOver = true;
+  beep(160, 0.5, 0.4, "down");
+  document.getElementById("overTitle").textContent = timedOut ? "TIME UP" : "GRID FAILURE";
+  document.getElementById("finalScore").textContent = score.toLocaleString();
+  document.getElementById("finalStats").textContent =
+    `${difficulty}   ·   MAX COMBO x${maxCombo}   ·   LINES ${lines}`;
+  document.getElementById("over").style.display = "flex";
 }
 
 function updateHud() {
@@ -320,52 +429,52 @@ function updateHud() {
   const heat = Math.min(combo / 8, 1) * (combo > 0 ? 1 - sinceClear / 3 : 0);
   document.getElementById("meterFill").style.width = (heat * 100) + "%";
 }
+function updateTimerUI() {
+  const wrap = document.getElementById("timerWrap");
+  if (timerTotal == null || !started) { wrap.style.display = "none"; return; }
+  wrap.style.display = "block";
+  const frac = Math.max(0, Math.min(1, timeLeft / timerTotal));
+  const fillEl = document.getElementById("timerFill");
+  fillEl.style.width = (frac * 100) + "%";
+  fillEl.style.background = frac > 0.5 ? "#00f0ff" : frac > 0.25 ? "#ffb800" : "#ff2b4e";
+}
 
 // ---------- background music: procedural synthwave loop ----------
-// One cycle of Am–F–C–G at 110 BPM, rendered once into a buffer and looped
-// gaplessly. Pure synthesis — no assets, no licensing.
-let musicOn = true, musicSrc = null, musicGain = null;
+let musicOn = true, musicSrc = null, musicGain = null, musicStarting = false;
 function renderMusicBuffer(ac) {
   const bpm = 110, beat = 60 / bpm, bar = beat * 4, total = bar * 4, sr = ac.sampleRate;
   const n = Math.floor(total * sr), data = new Float32Array(n);
-  // chord roots (Hz, octave 2) and triads as semitone offsets from root
-  const roots = [55.0, 43.65, 65.41, 49.0];          // A1 F1 C2 G1
-  const triad = [[0,3,7],[0,4,7],[0,4,7],[0,4,7]];   // Am major-ish others
+  const roots = [55.0, 43.65, 65.41, 49.0];
+  const triad = [[0,3,7],[0,4,7],[0,4,7],[0,4,7]];
   const st = s => Math.pow(2, s / 12);
   for (let i = 0; i < n; i++) {
     const t = i / sr, barIdx = Math.floor(t / bar) % 4, tb = t % bar;
     const root = roots[barIdx], tri = triad[barIdx];
     let v = 0;
-    // BASS: 8th-note pulses, square+sub
     const eighth = tb % (beat / 2), eIdx = Math.floor(tb / (beat / 2));
     const bEnv = Math.exp(-eighth * 9) * 0.8;
     const bFreq = root * (eIdx % 4 === 3 ? st(tri[2]) : 1);
     v += (Math.sign(Math.sin(2 * Math.PI * bFreq * 2 * t)) * 0.35 +
           Math.sin(2 * Math.PI * bFreq * t)) * bEnv * 0.16;
-    // PAD: sustained triad, triangle-ish, slow swell per bar
     const pEnv = Math.min(tb / 0.5, 1) * Math.min((bar - tb) / 0.3, 1);
     for (const s of tri) {
       const f = root * 4 * st(s);
       v += Math.asin(Math.sin(2 * Math.PI * f * t)) * (2 / Math.PI) * pEnv * 0.035;
     }
-    // ARP: 16th notes cycling chord tones two octaves up, with echo
     const six = beat / 4, aIdx = Math.floor(tb / six), aT = tb % six;
     const seq = [0, tri[1], tri[2], 12];
     const aF = root * 8 * st(seq[aIdx % 4]);
     const aEnv = Math.exp(-aT * 14);
     v += Math.sin(2 * Math.PI * aF * t) * aEnv * 0.10;
     const aIdx2 = (aIdx + 13) % 16, aF2 = root * 8 * st(seq[aIdx2 % 4]);
-    v += Math.sin(2 * Math.PI * aF2 * t) * aEnv * 0.045; // echo ghost
-    // KICK: every beat, pitch drop
+    v += Math.sin(2 * Math.PI * aF2 * t) * aEnv * 0.045;
     const kT = tb % beat;
     v += Math.sin(2 * Math.PI * (40 + 90 * Math.exp(-kT * 28)) * kT) * Math.exp(-kT * 14) * 0.5;
-    // SNARE: beats 2 & 4
     const beatIdx = Math.floor(tb / beat), sT = tb - beatIdx * beat;
     if (beatIdx % 2 === 1) {
       v += ((Math.random() * 2 - 1) * 0.5 + Math.sin(2 * Math.PI * 190 * sT) * 0.3) *
            Math.exp(-sT * 22) * 0.30;
     }
-    // HAT: offbeat 8ths
     const hT = (tb + beat / 4) % (beat / 2);
     v += (Math.random() * 2 - 1) * Math.exp(-hT * 90) * 0.12;
     data[i] = Math.max(-1, Math.min(1, v));
@@ -374,7 +483,16 @@ function renderMusicBuffer(ac) {
   buf.copyToChannel(data, 0);
   return buf;
 }
+// Rendering the loop buffer is a heavy synchronous pass (~hundreds of ms on a
+// phone). It must NEVER run inside the tap that triggers it, or the first tap
+// (BOOT GRID) freezes and can be dropped. Defer it off the gesture.
 function startMusic() {
+  if (musicSrc || musicStarting || !musicOn) return;
+  musicStarting = true;
+  setTimeout(startMusicNow, 0);
+}
+function startMusicNow() {
+  musicStarting = false;
   if (musicSrc || !musicOn) return;
   try {
     actx = actx || new (window.AudioContext || window.webkitAudioContext)();
@@ -390,13 +508,22 @@ function startMusic() {
 function showIntro() {
   document.getElementById("introBest").textContent = best.toLocaleString();
   document.getElementById("intro").style.display = "flex";
+  started = false;
+}
+function selectDifficulty(d) {
+  selectedDifficulty = d;
+  document.querySelectorAll(".diff").forEach(b => b.classList.toggle("sel", b.dataset.d === d));
+  document.getElementById("diffBlurb").textContent = DIFF_BLURB[d];
 }
 function startPlay() {
+  if (started) return;
+  newGame(selectedDifficulty);
+  started = true;
   document.getElementById("intro").style.display = "none";
-  startMusic(); // first user gesture unlocks audio
+  startMusic();
 }
 function goHome() {
-  newGame();
+  document.getElementById("over").style.display = "none";
   showIntro();
 }
 function toggleHelp() {
@@ -445,10 +572,7 @@ function noiseBurst(dur, vol, delay = 0) {
     src.connect(g).connect(actx.destination); src.start(t0);
   } catch (e) {}
 }
-// Catchy clear: a bright rising arpeggio IN KEY with the music (A minor),
-// warm triangle pluck + octave shimmer. Higher combos start the riff higher
-// up the scale — a melodic ladder that rewards chaining.
-const CLEAR_SCALE = [0, 3, 7, 12, 15, 19, 24, 27, 31]; // Am arpeggio degrees
+const CLEAR_SCALE = [0, 3, 7, 12, 15, 19, 24, 27, 31];
 function shatterSound(lines, combo) {
   const start = Math.min(Math.max(combo - 1, 0), 3);
   const notes = 4 + Math.min(lines, 2);
@@ -456,11 +580,11 @@ function shatterSound(lines, combo) {
     const deg = CLEAR_SCALE[Math.min(start + k, CLEAR_SCALE.length - 1)];
     const f = 440 * Math.pow(2, deg / 12);
     const d = k * 0.05;
-    beep(f, 0.22, 0.28, "flat", d, "triangle");   // warm body
-    beep(f * 2, 0.22, 0.09, "flat", d, "sine");   // sparkle octave
+    beep(f, 0.22, 0.28, "flat", d, "triangle");
+    beep(f * 2, 0.22, 0.09, "flat", d, "sine");
   }
-  beep(110, 0.18, 0.35, "down");                  // soft warm thump
-  if (lines >= 3) beep(880, 0.4, 0.18, "up", notes * 0.05, "sine"); // ta-da tail
+  beep(110, 0.18, 0.35, "down");
+  if (lines >= 3) beep(880, 0.4, 0.18, "up", notes * 0.05, "sine");
 }
 
 // ---------- fx ----------
@@ -477,12 +601,14 @@ function spawnParticles(cx, cy, colorIdx) {
 
 // ---------- rendering & input ----------
 const cv = document.getElementById("game"), ctx = cv.getContext("2d");
-let cell, boardPx, trayY, traySlot, dpr = devicePixelRatio || 1;
+let cell, boardPx, trayTop, trayH, dpr = devicePixelRatio || 1;
 function resize() {
   const w = Math.min(innerWidth * 0.92, 440);
-  boardPx = w; cell = w / N; trayY = boardPx + 24; traySlot = w / 3;
-  cv.width = w * dpr; cv.height = (boardPx + 24 + traySlot * 0.9) * dpr;
-  cv.style.width = w + "px"; cv.style.height = (boardPx + 24 + traySlot * 0.9) + "px";
+  boardPx = w; cell = w / N;
+  trayTop = boardPx + 20;
+  trayH = (w / 3) * 0.94;
+  cv.width = w * dpr; cv.height = (trayTop + trayH + 6) * dpr;
+  cv.style.width = w + "px"; cv.style.height = (trayTop + trayH + 6) + "px";
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 addEventListener("resize", resize); resize();
@@ -493,21 +619,31 @@ function rotatePiece(p) {
   return { id: p.id, cells, h: p.wd, wd: p.h, n: p.n, w: p.w, awkward: p.awkward };
 }
 
-let drag = null; // {slot, piece, color, px, py, startX, startY, moved}
-function trayGeom(slot) {
-  const p = tray[slot]; if (!p) return null;
-  const mini = traySlot / (Math.max(p.piece.wd, p.piece.h, 3) + 1);
-  const w = p.piece.wd * mini, h = p.piece.h * mini;
-  return { mini, x: slot * traySlot + (traySlot - w) / 2, y: trayY + (traySlot * 0.9 - h) / 2, w, h };
+// Active piece occupies the left ~60% of the tray row; NEXT preview the right.
+const ACTIVE_ZONE = 0.60;
+function activeGeo() {
+  if (!active) return null;
+  const p = active.piece, zoneW = boardPx * ACTIVE_ZONE;
+  const mini = Math.min(trayH, zoneW) / (Math.max(p.wd, p.h, 3) + 1);
+  const w = p.wd * mini, h = p.h * mini;
+  return { mini, x: (zoneW - w) / 2, y: trayTop + (trayH - h) / 2, w, h };
 }
+function nextGeo() {
+  if (!next) return null;
+  const p = next.piece, zoneX = boardPx * 0.64, zoneW = boardPx * 0.36;
+  const mini = Math.min(trayH * 0.62, zoneW) / (Math.max(p.wd, p.h, 3) + 1);
+  const w = p.wd * mini, h = p.h * mini;
+  return { mini, x: zoneX + (zoneW - w) / 2, y: trayTop + (trayH - h) / 2 + 6, w, h };
+}
+
+let drag = null; // {piece, color, px, py, startX, startY, moved}
 function pointerPos(e) { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
 cv.addEventListener("pointerdown", e => {
-  if (gameOver) return;
+  if (gameOver || !started) return;
   const { x, y } = pointerPos(e);
-  if (y < trayY) return;
-  const slot = Math.min(2, Math.max(0, Math.floor(x / traySlot)));
-  if (!tray[slot]) return;
-  drag = { slot, ...tray[slot], px: x, py: y, startX: x, startY: y, moved: false };
+  // Only the active piece (left zone of the tray row) is interactive.
+  if (y < trayTop || x > boardPx * ACTIVE_ZONE || !active) return;
+  drag = { piece: active.piece, color: active.color, px: x, py: y, startX: x, startY: y, moved: false };
   cv.setPointerCapture(e.pointerId);
   e.preventDefault();
 });
@@ -520,12 +656,14 @@ cv.addEventListener("pointermove", e => {
 cv.addEventListener("pointerup", e => {
   if (!drag) return;
   if (!drag.moved) {
-    // Tap = rotate the piece in place.
-    tray[drag.slot].piece = rotatePiece(tray[drag.slot].piece);
-    beep(440, 0.04, 0.12);
+    // Tap = rotate the active piece in place (disabled on no-rotation tiers).
+    if (DIFFICULTIES[difficulty].rotate) {
+      active.piece = rotatePiece(active.piece);
+      beep(440, 0.04, 0.12);
+    }
   } else {
     const g = ghostAnchor();
-    if (g && g.valid) place(drag.slot, g.r, g.c);
+    if (g && g.valid) place(g.r, g.c);
   }
   drag = null;
 });
@@ -542,14 +680,12 @@ function ghostAnchor() {
 function drawBlock(x, y, size, color, alpha = 1) {
   ctx.save();
   ctx.globalAlpha = alpha;
-  // Tight glow: enough neon to read, not enough to fog the edges.
   ctx.shadowColor = color; ctx.shadowBlur = size * 0.18;
   const inset = size * 0.07, s = size - inset * 2, rad = size * 0.14;
   const grad = ctx.createLinearGradient(x, y + inset, x, y + inset + s);
   grad.addColorStop(0, lighten(color, 0.5)); grad.addColorStop(0.45, color); grad.addColorStop(1, darken(color, 0.3));
   ctx.fillStyle = grad;
   roundRect(x + inset, y + inset, s, s, rad); ctx.fill();
-  // Crisp bright rim — this is what makes the block read as sharp.
   ctx.shadowBlur = 0;
   ctx.strokeStyle = lighten(color, 0.65);
   ctx.lineWidth = Math.max(1.5, size * 0.035);
@@ -571,7 +707,14 @@ function mix(hex, rgb2, t) {
 let lastT = 0;
 function frame(t) {
   const dt = Math.min((t - lastT) / 1000, 0.05); lastT = t;
-  // update fx
+
+  // per-piece placement clock
+  if (started && !gameOver && timerTotal != null) {
+    timeLeft -= dt;
+    if (timeLeft <= 0) { timeLeft = 0; endGame(true); }
+  }
+  updateTimerUI();
+
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
     p.life -= dt;
@@ -588,7 +731,6 @@ function frame(t) {
   ctx.clearRect(0, 0, cv.width, cv.height);
   ctx.save(); ctx.translate(ox, oy);
 
-  // holo panel: plated background + neon outline + corner brackets
   const fill = board.filter(Boolean).length / 64;
   const panelGrad = ctx.createLinearGradient(0, 0, 0, boardPx);
   panelGrad.addColorStop(0, "#14142a"); panelGrad.addColorStop(1, "#0c0a18");
@@ -602,7 +744,6 @@ function frame(t) {
   for (const [x, y, sx, sy] of [[o,o,1,1],[boardPx-o,o,-1,1],[o,boardPx-o,1,-1],[boardPx-o,boardPx-o,-1,-1]]) {
     ctx.beginPath(); ctx.moveTo(x + arm * sx, y); ctx.lineTo(x, y); ctx.lineTo(x, y + arm * sy); ctx.stroke();
   }
-  // cell sockets: recessed slots, no grid lines
   for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
     const x = c * cell + cell * .07, y = r * cell + cell * .07, s = cell * .86;
     ctx.fillStyle = "rgba(0,0,0,.16)";
@@ -610,13 +751,11 @@ function frame(t) {
     ctx.strokeStyle = "rgba(255,255,255,.06)"; ctx.lineWidth = 1.2;
     roundRect(x, y, s, s, cell * .12); ctx.stroke();
   }
-  // danger pulse
   if (fill > 0.75 && !gameOver) {
     ctx.strokeStyle = `rgba(255,43,78,${0.25 + 0.25 * Math.sin(t / 120)})`;
     ctx.lineWidth = cell * 0.08;
     roundRect(2, 2, boardPx - 4, boardPx - 4, cell * .12); ctx.stroke();
   }
-  // would-clear highlight
   const g = ghostAnchor();
   if (g && g.valid && drag) {
     const sim = board.slice();
@@ -626,10 +765,8 @@ function frame(t) {
     rows.forEach(rr => ctx.fillRect(0, rr * cell, boardPx, cell));
     cols.forEach(cc => ctx.fillRect(cc * cell, 0, cell, boardPx));
   }
-  // placed blocks
   for (let i = 0; i < 64; i++) if (board[i])
     drawBlock((i % N) * cell, Math.floor(i / N) * cell, cell, COLORS[(colors[i] - 1 + 5) % 5]);
-  // ghost
   if (g && drag) {
     const color = g.valid ? COLORS[drag.color - 1] : "#ff2b4e";
     drag.piece.cells.forEach(([dr, dc]) => {
@@ -640,7 +777,6 @@ function frame(t) {
       }
     });
   }
-  // particles
   ctx.globalCompositeOperation = "lighter";
   for (const p of particles) {
     ctx.globalAlpha = Math.max(0, p.life / p.max) * 0.85;
@@ -648,22 +784,28 @@ function frame(t) {
     ctx.beginPath(); ctx.arc(p.x * cell, p.y * cell, cell * 0.1 * (0.5 + p.life / p.max), 0, 7); ctx.fill();
   }
   ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
-  // score pops
   ctx.font = `bold ${cell * 0.5}px monospace`; ctx.fillStyle = "#ffb800"; ctx.textAlign = "center";
   for (const p of pops) {
     ctx.globalAlpha = 1 - p.age / 0.8;
     ctx.fillText(p.text, (p.x + 1) * cell, (p.y + 0.5) * cell - p.age * 50);
   }
   ctx.globalAlpha = 1;
-  // tray
-  for (let s = 0; s < 3; s++) {
-    const tp = tray[s]; if (!tp) continue;
-    if (drag && drag.slot === s) continue;
-    const geo = trayGeom(s);
-    const placeable = anyPlacement(board, tp.piece);
-    tp.piece.cells.forEach(([dr, dc]) =>
-      drawBlock(geo.x + dc * geo.mini, geo.y + dr * geo.mini, geo.mini,
-        COLORS[tp.color - 1], placeable ? 1 : 0.3));
+
+  // active piece (unless it's being dragged)
+  const ageo = activeGeo();
+  if (ageo && active) {
+    const placeable = canStillPlay(board, active.piece, difficulty);
+    const alpha = drag ? 0.25 : (placeable ? 1 : 0.35);
+    active.piece.cells.forEach(([dr, dc]) =>
+      drawBlock(ageo.x + dc * ageo.mini, ageo.y + dr * ageo.mini, ageo.mini, COLORS[active.color - 1], alpha));
+  }
+  // NEXT preview (dimmed, non-interactive) + label
+  const ngeo = nextGeo();
+  if (ngeo && next) {
+    ctx.font = `10px monospace`; ctx.fillStyle = "#5a7a8c"; ctx.textAlign = "center";
+    ctx.fillText("NEXT", boardPx * 0.64 + boardPx * 0.18, trayTop + 12);
+    next.piece.cells.forEach(([dr, dc]) =>
+      drawBlock(ngeo.x + dc * ngeo.mini, ngeo.y + dr * ngeo.mini, ngeo.mini, COLORS[next.color - 1], 0.5));
   }
   // dragged piece at board scale
   if (drag) {
@@ -675,8 +817,13 @@ function frame(t) {
   ctx.restore();
   requestAnimationFrame(frame);
 }
-newGame();
+selectDifficulty("BEGINNER");
+newGame("BEGINNER");
 showIntro();
+// Boot on pointerup as well as click: on some mobile browsers a slow first
+// tap can suppress the synthesized click, so bind both (startPlay is guarded
+// against double-fire) to guarantee the grid always boots.
+document.getElementById("playBtn").addEventListener("pointerup", startPlay);
 requestAnimationFrame(frame);
 </script>
 </body>
