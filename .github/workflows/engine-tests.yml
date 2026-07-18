@@ -1,0 +1,41 @@
+name: engine tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Playability & fairness suites
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # The engine module is pure Kotlin/JVM with no Android dependencies,
+      # so the whole suite — including the 620-game playability simulation —
+      # runs on a plain JVM runner in a few seconds.
+      - name: Run engine tests
+        run: ./gradlew :engine:test --no-daemon
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: engine-test-report
+          path: engine/build/reports/tests/test/
+          retention-days: 14
+          if-no-files-found: ignore

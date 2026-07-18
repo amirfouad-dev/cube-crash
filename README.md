@@ -7,6 +7,11 @@
 **A neon block-puzzle game for Android — Kotlin and Jetpack Compose, built on a
 pure-Kotlin engine with a test suite that plays the game to prove it stays fair.**
 
+[![engine tests](https://github.com/amirfouad-dev/cube-crash/actions/workflows/engine-tests.yml/badge.svg)](https://github.com/amirfouad-dev/cube-crash/actions/workflows/engine-tests.yml)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.2.20-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-UI-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
+[![min SDK 26](https://img.shields.io/badge/min%20SDK-26-3DDC84?logo=android&logoColor=white)](https://developer.android.com)
+
 No ads. No in-app purchases. No accounts. No network.
 The manifest requests exactly one permission: `VIBRATE`.
 
@@ -80,6 +85,19 @@ difficulty still winnable?"**
 human: it never traps its own next piece, and otherwise keeps the board empty and
 un-fragmented. It plays **620 seeded games** across the tiers and asserts on the
 score *distribution* — at least 80% of careful runs must pass 2,000 points.
+
+Actual output from a run:
+
+```
+[BEGINNER]     n=40   reach2000=100%  p10=6009  median=6085  p90=6198
+[INTERMEDIATE] n=40   reach2000=100%  p10=6024  median=6069  p90=6214
+[ADVANCED]     n=150  reach2000=97%   p10=3918  median=6087  p90=6284
+[INSANE]       n=150  reach2000=100%  p10=6017  median=6095  p90=6260
+```
+
+Advanced is the one tier that drops below 100%, which is the intended result —
+it is the only tier where the joint-solvability guarantee is switched off, so a
+careless placement genuinely can trap you.
 
 A second test proves a fairness invariant directly: on the guarantee-on tiers,
 whenever the active piece fits, the piece behind it must still be placeable after
