@@ -17,12 +17,19 @@ android {
         versionName = "1.1.0"
     }
 
-    signingConfigs {
-        create("release") {
-            storeFile = file(providers.gradleProperty("NEONGRID_KEYSTORE").get())
-            storePassword = providers.gradleProperty("NEONGRID_KEYSTORE_PASSWORD").get()
-            keyAlias = providers.gradleProperty("NEONGRID_KEY_ALIAS").get()
-            keyPassword = providers.gradleProperty("NEONGRID_KEY_PASSWORD").get()
+    // Release signing is only wired up when the keystore properties are present
+    // (they live outside the repo). Without them — on CI, or a fresh clone — the
+    // project still configures and debug builds and the engine tests run fine;
+    // only assembleRelease needs the real key.
+    val keystorePath = providers.gradleProperty("NEONGRID_KEYSTORE").orNull
+    if (keystorePath != null) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = providers.gradleProperty("NEONGRID_KEYSTORE_PASSWORD").get()
+                keyAlias = providers.gradleProperty("NEONGRID_KEY_ALIAS").get()
+                keyPassword = providers.gradleProperty("NEONGRID_KEY_PASSWORD").get()
+            }
         }
     }
 
@@ -30,7 +37,9 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = signingConfigs.getByName("release")
+            if (keystorePath != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
